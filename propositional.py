@@ -1,14 +1,14 @@
 from collections import defaultdict
 
-from primitives import Clause, Var, HornKB, HornClause
+from primitives import Clause, Literal, HornKB, HornClause
 
 
-def unit_resolution(clause: Clause, literal: Var) -> Clause:
+def unit_resolution(clause: Clause, literal: Literal) -> Clause:
     """Unit resolution rule."""
     return clause - ~literal
 
 
-def forward_chaining_solve(knowledge_base: HornKB, query: Var) -> bool:
+def forward_chaining_solve(knowledge_base: HornKB, query: Literal) -> bool:
     """Propositional logic entailment check with forward chaining.
     (Answers to question: knowledge_base ⊨? query)"""
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Var:
+class Literal:
     """A single propositional literal.
     This class is immutable. It supports the call operator to get the literal's value,
     and bitwise negation (~) to get a logically negated literal"""
@@ -12,10 +12,10 @@ class Var:
     negate: bool = False
 
     def __invert__(self):
-        return Var(self.name, not self.negate)
+        return Literal(self.name, not self.negate)
 
     def __str__(self):
-        string = "Var(name='"
+        string = "Literal(name='"
         if self.negate:
             string += "¬"
         string += f"{self.name}')"
@@ -34,8 +34,8 @@ class Var:
 class Clause:
     """A `Clause` is a disjunction of literals.
     This class is immutable. It supports the call operator to get its logical value,
-    bitwise negation (`~`) to get a logically negated clause, subtraction with Var to remove a variable
-    from the clause, and insiemistic inclusion (`in`) to check whether the clause contains a literal (`Var`)."""
+    bitwise negation (`~`) to get a logically negated clause, subtraction with Literal to remove a variable
+    from the clause, and insiemistic inclusion (`in`) to check whether the clause contains a literal (`Literal`)."""
 
     vars: frozenset
     negate: bool
@@ -66,10 +66,10 @@ class Clause:
 
         return self.negate ^ res
 
-    def __contains__(self, var: Var):
+    def __contains__(self, var: Literal):
         return var in self.vars
 
-    def __sub__(self, other: Var):
+    def __sub__(self, other: Literal):
         return Clause(self.vars - {other}, self.negate)
 
     def __invert__(self):
@@ -104,7 +104,7 @@ class HornClause(Clause):
 class KB:
     """A `KB` is a set of `Clause`s; informally it represents a propositional clause in CNF
     (Conjunctive Normal Form). It supports the same operations of `Clause`,
-    but applied to `Clause`s instead of `Var`s"""
+    but applied to `Clause`s instead of `Literal`s"""
 
     clauses: frozenset
 
