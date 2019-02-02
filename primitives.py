@@ -1,5 +1,5 @@
+from collections import Counter
 from dataclasses import dataclass
-from typing import Set
 
 
 @dataclass(frozen=True)
@@ -80,6 +80,29 @@ class Clause:
         return Clause(self.vars, not self.negate)
 
 
+@dataclass(init=False, frozen=True)
+class HornClause(Clause):
+    def __init__(self, vars=frozenset(), negate=False):
+        super().__init__(vars, negate)
+
+        if not HornClause.is_horn(vars):
+            raise TypeError("Horn clauses must have only one positive literal")
+
+        for var in self.vars:
+            if not var.negate:
+                object.__setattr__(self, 'head', var)
+
+        object.__setattr__(self, 'body', [var for var in vars if var.negate])
+
+    def from_clause(clause: Clause):
+        return HornClause(clause.vars)
+
+    def is_horn(vars=frozenset()):
+        literals_state = [var.negate for var in vars]
+        negated_literals = Counter(literals_state)
+
+        return negated_literals[False] == 1
+
 
 @dataclass(frozen=True, init=False)
 class KB:
@@ -117,3 +140,21 @@ class KB:
 
     def __sub__(self, other: Clause):
         return KB(self.clauses.difference({other}))
+
+    def __iter__(self):
+        return iter(self.clauses)
+
+
+@dataclass(init=False, frozen=True)
+class HornKB(KB):
+    def __init__(self, clauses=frozenset()):
+        for clause in clauses:
+            if not HornClause.is_horn(clause.vars):
+                raise TypeError("HornKB must be composed only of Horn clauses")
+
+        horn_clauses = frozenset([HornClause.from_clause(clause) for clause in clauses])
+        super().__init__(horn_clauses)
+
+    def __add__(self, other: HornClause):
+        clause = HornClause.from_clause(other)
+        return HornKB(super().__add__(clause).clauses)
