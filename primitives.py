@@ -26,6 +26,13 @@ class Var:
 
         return string
 
+    def truename(self):
+        name = ""
+        if self.negate:
+            name += "¬"
+        name += self.name
+        return name
+
 
 @dataclass(frozen=True, init=False)
 class Clause:
@@ -51,7 +58,7 @@ class Clause:
             string += "¬"
 
         string += "("
-        string += " ∨ ".join([var.name for var in self.vars])
+        string += " ∨ ".join([var.truename() for var in self.vars])
         string += ")"
 
         return string
