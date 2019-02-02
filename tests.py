@@ -2,7 +2,7 @@ import unittest
 from primitives import Var, PrimitiveClause
 
 
-class PropositionalLogic(unittest.TestCase):
+class PropositionalLogicTestCase(unittest.TestCase):
 
     def test_var_eval(self):
         a = Var("a", True)
