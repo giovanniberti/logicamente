@@ -28,8 +28,8 @@ class Var:
 
 
 @dataclass(frozen=True, init=False)
-class PrimitiveClause:
-    """A `PrimitiveClause` is a disjunction of literals.
+class Clause:
+    """A `Clause` is a disjunction of literals.
     This class is immutable. It supports the call operator to get its logical value,
     bitwise negation (`~`) to get a logically negated clause, subtraction with Var to remove a variable
     from the clause, and insiemistic inclusion (`in`) to check whether the clause contains a literal (`Var`)."""
@@ -67,52 +67,46 @@ class PrimitiveClause:
         return var in self.vars
 
     def __sub__(self, other: Var):
-        return PrimitiveClause(self.vars - {other}, self.negate)
+        return Clause(self.vars - {other}, self.negate)
 
     def __invert__(self):
-        return PrimitiveClause(self.vars, not self.negate)
+        return Clause(self.vars, not self.negate)
+
 
 
 @dataclass(frozen=True, init=False)
-class Clause:
-    """A `Clause` is a set of `PrimitiveClause`s; informally it represents a propositional clause in CNF
-    (Conjunctive Normal Form). It supports the same operations of `PrimitiveClause`,
-    but applied to `PrimitiveClause`s instead of `Var`s"""
+class KB:
+    """A `KB` is a set of `Clause`s; informally it represents a propositional clause in CNF
+    (Conjunctive Normal Form). It supports the same operations of `Clause`,
+    but applied to `Clause`s instead of `Var`s"""
 
-    primitive_clauses: frozenset
+    clauses: frozenset
 
-    def __init__(self, primitive_clauses=frozenset()):
-        if type(primitive_clauses) not in [frozenset, set]:
-            raise TypeError("primitive_clauses argument must be either set or frozenset!")
+    def __init__(self, clauses=frozenset()):
+        if type(clauses) not in [frozenset, set]:
+            raise TypeError("clauses argument must be either set or frozenset!")
 
-        object.__setattr__(self, "primitive_clauses", frozenset(primitive_clauses))
+        object.__setattr__(self, "clauses", frozenset(clauses))
 
     def __str__(self):
         string = "("
-        string += " ∧ ".join([str(clause) for clause in self.primitive_clauses])
+        string += " ∧ ".join([str(clause) for clause in self.clauses])
         string += ")"
 
         return string
 
     def __call__(self, *args, **kwargs):
         res = True
-        for clause in self.primitive_clauses:
+        for clause in self.clauses:
             res = res and clause()
 
         return res
 
-    def __contains__(self, pclause: PrimitiveClause):
-        return pclause in self.primitive_clauses
+    def __contains__(self, clause: Clause):
+        return clause in self.clauses
 
-    def __add__(self, other: PrimitiveClause):
-        return Clause(self.primitive_clauses.union({other}))
+    def __add__(self, other: Clause):
+        return KB(self.clauses.union({other}))
 
-    def __sub__(self, other: PrimitiveClause):
-        return Clause(self.primitive_clauses.difference({other}))
-
-
-class KB:
-    clauses: Set[Clause]
-
-    def __init__(self, clauses: Set[Clause]):
-        self.clauses = clauses
+    def __sub__(self, other: Clause):
+        return KB(self.clauses.difference({other}))

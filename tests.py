@@ -1,5 +1,5 @@
 import unittest
-from primitives import Var, PrimitiveClause
+from primitives import Var, Clause
 
 
 class PropositionalLogicTestCase(unittest.TestCase):
@@ -18,7 +18,7 @@ class PropositionalLogicTestCase(unittest.TestCase):
         a = Var("a")
         b = Var("b")
 
-        p = PrimitiveClause({a, b})
+        p = Clause({a, b})
 
         self.assertEqual(a in p, True)
 
@@ -26,8 +26,8 @@ class PropositionalLogicTestCase(unittest.TestCase):
         a = Var("a")
         b = Var("b")
 
-        p = PrimitiveClause({a, b})
-        p2 = PrimitiveClause({a})
+        p = Clause({a, b})
+        p2 = Clause({a})
 
         self.assertEqual(p - b, p2)
 
@@ -35,6 +35,6 @@ class PropositionalLogicTestCase(unittest.TestCase):
         a = Var("a", False)
         b = Var("b", True)
 
-        p = PrimitiveClause({a, b})
+        p = Clause({a, b})
 
         self.assertEqual(p(), True)
