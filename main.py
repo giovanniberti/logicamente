@@ -10,11 +10,8 @@ def main():
 
 def run_tests():
     suite = unittest.TestSuite()
-    suite.addTest(PropositionalLogicTestCase('test_var_eval'))
-    suite.addTest(PropositionalLogicTestCase('test_var_negate'))
-    suite.addTest(PropositionalLogicTestCase('test_primitive_clause_contains'))
-    suite.addTest(PropositionalLogicTestCase('test_primitive_clause_remove'))
-    suite.addTest(PropositionalLogicTestCase('test_primitive_clause_eval'))
+    suite.addTest(PropositionalLogicTestCase('test_clause_contains'))
+    suite.addTest(PropositionalLogicTestCase('test_clause_remove'))
 
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)

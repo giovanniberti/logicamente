@@ -9,20 +9,16 @@ class Var:
     and bitwise negation (~) to get a logically negated literal"""
 
     name: str
-    value: bool = False
     negate: bool = False
 
-    def __call__(self, *args, **kwargs):
-        return self.value
-
     def __invert__(self):
-        return Var(self.name, not self.value, not self.negate)
+        return Var(self.name, not self.negate)
 
     def __str__(self):
         string = "Var(name='"
         if self.negate:
             string += "¬"
-        string += f"{self.name}', value={self.value})"
+        string += f"{self.name}')"
 
         return string
 
