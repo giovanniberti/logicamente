@@ -4,6 +4,10 @@ from typing import Set
 
 @dataclass(frozen=True)
 class Var:
+    """A single propositional literal.
+    This class is immutable. It supports the call operator to get the literal's value,
+    and bitwise negation (~) to get a logically negated literal"""
+
     name: str
     value: bool = False
     negate: bool = False
@@ -25,6 +29,11 @@ class Var:
 
 @dataclass(frozen=True, init=False)
 class PrimitiveClause:
+    """A `PrimitiveClause` is a disjunction of literals.
+    This class is immutable. It supports the call operator to get its logical value,
+    bitwise negation (`~`) to get a logically negated clause, subtraction with Var to remove a variable
+    from the clause, and insiemistic inclusion (`in`) to check whether the clause contains a literal (`Var`)."""
+
     vars: frozenset
     negate: bool
 
@@ -66,6 +75,10 @@ class PrimitiveClause:
 
 @dataclass(frozen=True, init=False)
 class Clause:
+    """A `Clause` is a set of `PrimitiveClause`s; informally it represents a propositional clause in CNF
+    (Conjunctive Normal Form). It supports the same operations of `PrimitiveClause`,
+    but applied to `PrimitiveClause`s instead of `Var`s"""
+
     primitive_clauses: frozenset
 
     def __init__(self, primitive_clauses=frozenset()):
