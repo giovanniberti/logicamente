@@ -29,7 +29,7 @@ class PropositionalLogic(unittest.TestCase):
         p = PrimitiveClause({a, b})
         p2 = PrimitiveClause({a})
 
-        self.assertEqual(p - a, p2)
+        self.assertEqual(p - b, p2)
 
     def test_primitive_clause_eval(self):
         a = Var("a", False)
