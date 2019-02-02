@@ -16,7 +16,7 @@ class Var:
         return self.value
 
     def __invert__(self):
-        return Var(self.name, not self.value)
+        return Var(self.name, not self.value, not self.negate)
 
     def __str__(self):
         string = "Var(name='"
