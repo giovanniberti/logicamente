@@ -1,24 +1,46 @@
+from abc import ABC
 from collections import Counter
-from dataclasses import dataclass
+from typing import FrozenSet, List
 
 
-@dataclass(frozen=True)
-class Literal:
+class Term(ABC):
+    negate: bool
+
+    def __init__(self, negate=False):
+        object.__setattr__(self, "negate", negate)
+
+    def __invert__(self):
+        return Term(not self.negate)
+
+    def __contains__(self, item):
+        return self == item
+
+    def __setattr__(self, key, value):
+        raise AttributeError("Class is immutable")
+
+    def __repr__(self):
+        return f"Term{{negate={self.negate}}}"
+
+
+class Literal(Term):
     """A single propositional literal.
     This class is immutable. It supports the call operator to get the literal's value,
     and bitwise negation (~) to get a logically negated literal"""
 
     name: str
-    negate: bool = False
+
+    def __init__(self, name: str, negate: bool = False):
+        super().__init__(negate)
+        object.__setattr__(self, "name", name)
 
     def __invert__(self):
         return Literal(self.name, not self.negate)
 
     def __str__(self):
-        string = "Literal(name='"
+        string = ""
         if self.negate:
             string += "¬"
-        string += f"{self.name}')"
+        string += f"{self.name}"
 
         return string
 
@@ -37,15 +59,15 @@ class Clause:
     bitwise negation (`~`) to get a logically negated clause, subtraction with Literal to remove a variable
     from the clause, and insiemistic inclusion (`in`) to check whether the clause contains a literal (`Literal`)."""
 
-    vars: frozenset
-    negate: bool
+    terms: FrozenSet[Term]
 
-    def __init__(self, vars=frozenset(), negate=False):
-        if type(vars) not in [frozenset, set]:
-            raise TypeError("vars argument must be either set or frozenset!")
+    def __init__(self, terms=frozenset(), negate: bool = False):
+        super().__init__(negate)
 
-        object.__setattr__(self, 'vars', frozenset(vars))
-        object.__setattr__(self, 'negate', negate)
+        if type(terms) not in [frozenset, set]:
+            raise TypeError("terms argument must be either set or frozenset!")
+
+        object.__setattr__(self, "terms", terms)
 
     def __str__(self):
         string = ""
@@ -54,29 +76,27 @@ class Clause:
             string += "¬"
 
         string += "("
-        string += " ∨ ".join([var.truename() for var in self.vars])
+        string += " ∨ ".join([str(term) for term in self.terms])
         string += ")"
 
         return string
 
-    def __call__(self, *args, **kwargs):
+    def __repr__(self):
+        return f"Clause{{terms={self.terms}, negate={self.negate}}}"
+
+    def __contains__(self, var: Term):
         res = False
-        for var in self.vars:
-            res = res or var()
-
-        return self.negate ^ res
-
-    def __contains__(self, var: Literal):
-        return var in self.vars
+        for v in self.terms:
+            res = res or (var in v)
+        return res
 
     def __sub__(self, other: Literal):
-        return Clause(self.vars - {other}, self.negate)
+        return Clause(self.terms - {other}, self.negate)
 
     def __invert__(self):
-        return Clause(self.vars, not self.negate)
+        return Clause(self.terms, not self.negate)
 
 
-@dataclass(init=False, frozen=True)
 class HornClause(Clause):
     def __init__(self, vars=frozenset(), negate=False):
         super().__init__(vars, negate)
@@ -84,35 +104,41 @@ class HornClause(Clause):
         if not HornClause.is_horn(vars):
             raise TypeError("Horn clauses must have only one positive literal")
 
-        for var in self.vars:
+        for var in self.terms:
             if not var.negate:
                 object.__setattr__(self, 'head', var)
 
         object.__setattr__(self, 'body', [var for var in vars if var.negate])
 
-    def from_clause(clause: Clause):
-        return HornClause(clause.vars)
+    def __repr__(self):
+        return f"HornClause{{terms={self.terms}, negate={self.negate}}}"
 
-    def is_horn(vars=frozenset()):
+    def from_clause(clause: Clause):
+        return HornClause(clause.terms)
+
+    def is_horn(vars: FrozenSet[Term]):
+        for var in vars:
+            if type(var) != Literal:
+                raise TypeError("Horn clauses are propositional")
+
         literals_state = [var.negate for var in vars]
         negated_literals = Counter(literals_state)
 
         return negated_literals[False] == 1
 
 
-@dataclass(frozen=True, init=False)
 class KB:
     """A `KB` is a set of `Clause`s; informally it represents a propositional clause in CNF
     (Conjunctive Normal Form). It supports the same operations of `Clause`,
     but applied to `Clause`s instead of `Literal`s"""
 
-    clauses: frozenset
+    clauses: FrozenSet[Clause]
 
     def __init__(self, clauses=frozenset()):
         if type(clauses) not in [frozenset, set]:
             raise TypeError("clauses argument must be either set or frozenset!")
 
-        object.__setattr__(self, "clauses", frozenset(clauses))
+        object.__setattr__(self, "clauses", clauses)
 
     def __str__(self):
         string = "("
@@ -121,12 +147,8 @@ class KB:
 
         return string
 
-    def __call__(self, *args, **kwargs):
-        res = True
-        for clause in self.clauses:
-            res = res and clause()
-
-        return res
+    def __repr__(self):
+        return f"KB{{clauses={self.clauses}}}"
 
     def __contains__(self, clause: Clause):
         return clause in self.clauses
@@ -141,7 +163,6 @@ class KB:
         return iter(self.clauses)
 
 
-@dataclass(init=False, frozen=True)
 class HornKB(KB):
     def __init__(self, clauses=frozenset()):
         for clause in clauses:
@@ -150,6 +171,9 @@ class HornKB(KB):
 
         horn_clauses = frozenset([HornClause.from_clause(clause) for clause in clauses])
         super().__init__(horn_clauses)
+
+    def __repr__(self):
+        return f"HornKB{{clauses={self.clauses}}}"
 
     def __add__(self, other: HornClause):
         clause = HornClause.from_clause(other)
