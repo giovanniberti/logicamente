@@ -44,16 +44,90 @@ class Literal(Term):
 
         return string
 
-    def truename(self):
-        name = ""
+    def __repr__(self):
+        return f"Literal{{name={self.name}, negate={self.negate}}}"
+
+    def __contains__(self, item):
+        return type(item) is Literal and self.name == item.name
+
+
+class Operator(Term, ABC):
+    operand1: Term
+    operand2: Term
+
+    def __init__(self, operand1, operand2, negate=False):
+        super().__init__(negate)
+        object.__setattr__(self, "operand1", operand1)
+        object.__setattr__(self, "operand2", operand2)
+
+    def __contains__(self, item: Term):
+        return item in self.operand1 or item in self.operand2
+
+
+class Or(Operator):
+    def __invert__(self):
+        return Or(self.operand1, self.operand2, not self.negate)
+
+    def __repr__(self) -> str:
+        return f"Or{{operand1={self.operand1}, operand2={self.operand2}}}"
+
+    def __str__(self):
+        string = ""
+
         if self.negate:
-            name += "¬"
-        name += self.name
-        return name
+            string += "¬"
+
+        return string + f"({self.operand1} ∨ {self.operand2})"
 
 
-@dataclass(frozen=True, init=False)
-class Clause:
+class And(Operator):
+    def __invert__(self):
+        return And(self.operand1, self.operand2, not self.negate)
+
+    def __repr__(self) -> str:
+        return f"And{{operand1={self.operand1}, operand2={self.operand2}}}"
+
+    def __str__(self):
+        string = ""
+
+        if self.negate:
+            string += "¬"
+
+        return string + f"({self.operand1} ∧ {self.operand2})"
+
+
+class FreeClause(Term):
+    terms: List[Term]
+
+    def __init__(self, terms, negate: bool = False):
+        super().__init__(negate)
+        object.__setattr__(self, "terms", terms)
+
+    def __str__(self):
+        string = ""
+
+        if self.negate:
+            string += "¬"
+
+        string += "("
+        string += "".join([str(term) for term in self.terms])
+
+        return string + ")"
+
+    def __repr__(self):
+        return f"FreeClause{{terms={self.terms}, negate={self.negate}}}"
+
+    def __contains__(self, var: Term):
+        res = False
+        for v in self.terms:
+            res = res or (var in v)
+        return res
+
+    def __invert__(self):
+        return FreeClause(self.terms, not self.negate)
+
+
+class Clause(Term):
     """A `Clause` is a disjunction of literals.
     This class is immutable. It supports the call operator to get its logical value,
     bitwise negation (`~`) to get a logically negated clause, subtraction with Literal to remove a variable
