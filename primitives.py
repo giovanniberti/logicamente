@@ -99,6 +99,38 @@ class And(Operator):
         return string + f"({self.operand1} ∧ {self.operand2})"
 
 
+class Implies(Operator):
+    def __invert__(self):
+        return Implies(self.operand1, self.operand2, not self.negate)
+
+    def __repr__(self):
+        return f"Implies{{operand1={repr(self.operand1)}, operand2={repr(self.operand2)}}}"
+
+    def __str__(self):
+        string = ""
+
+        if self.negate:
+            string += "¬"
+
+        return string + f"({self.operand1} ⇒ {self.operand2})"
+
+
+class Iff(Operator):
+    def __invert__(self):
+        return Iff(self.operand1, self.operand2, not self.negate)
+
+    def __repr__(self):
+        return f"Implies{{operand1={repr(self.operand1)}, operand2={repr(self.operand2)}}}"
+
+    def __str__(self):
+        string = ""
+
+        if self.negate:
+            string += "¬"
+
+        return string + f"({self.operand1} ⇔ {self.operand2})"
+
+
 class FreeClause(Term):
     terms: List[Term]
 
