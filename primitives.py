@@ -163,6 +163,32 @@ class FreeClause(Term):
         return FreeClause(self.terms, not self.negate)
 
 
+class HornFreeClause(FreeClause):
+    def __init__(self, terms, negate: bool = False):
+        super().__init__(terms, negate)
+
+        if not HornFreeClause.is_horn(terms):
+            raise TypeError("Free Horn clauses must have only one positive literal")
+
+        for term in self.terms:
+            if not term.negate:
+                object.__setattr__(self, 'head', term)
+
+        object.__setattr__(self, 'body', [term for term in terms if term.negate])
+
+    def __repr__(self):
+        return f"HornFreeClause{{terms={repr(self.terms)}, negate={repr(self.negate)}}}"
+
+    def is_horn(terms):
+        literals_state = [term.negate for term in terms]
+        negated_literals = Counter(literals_state)
+
+        return negated_literals[False] == 1
+
+    def from_clause(clause: FreeClause):
+        return HornFreeClause(clause.terms, clause.negate)
+
+
 class Clause(Term):
     """A `Clause` is a disjunction of literals.
     This class is immutable. It supports the call operator to get its logical value,
@@ -239,14 +265,7 @@ class HornClause(Clause):
         return HornClause(clause.terms)
 
     def is_horn(vars: FrozenSet[Term]):
-        for var in vars:
-            if type(var) != Literal:
-                raise TypeError("Horn clauses are propositional")
-
-        literals_state = [var.negate for var in vars]
-        negated_literals = Counter(literals_state)
-
-        return negated_literals[False] == 1
+        return HornFreeClause.is_horn(vars)
 
 
 class KB:
@@ -292,7 +311,7 @@ class KB:
 class HornKB(KB):
     def __init__(self, clauses=frozenset()):
         for clause in clauses:
-            if not HornClause.is_horn(clause.vars):
+            if not HornFreeClause.is_horn(clause.terms):
                 raise TypeError("HornKB must be composed only of Horn clauses")
 
         horn_clauses = frozenset([HornClause.from_clause(clause) for clause in clauses])
@@ -301,6 +320,12 @@ class HornKB(KB):
     def __repr__(self):
         return f"HornKB{{clauses={self.clauses}}}"
 
-    def __add__(self, other: HornClause):
-        clause = HornClause.from_clause(other)
-        return HornKB(super().__add__(clause).clauses)
+    def __add__(self, other):
+        if not HornFreeClause.is_horn(other):
+            raise ValueError("Cannot add non-Horn clause to HornKB")
+
+        new = HornKB()
+        for term in iter(other):
+            new = HornKB(new.clauses.union(term))
+
+        return
