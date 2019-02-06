@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import Counter
 from typing import FrozenSet, List
 
@@ -9,8 +9,9 @@ class Term(ABC):
     def __init__(self, negate=False):
         object.__setattr__(self, "negate", negate)
 
+    @abstractmethod
     def __invert__(self):
-        return Term(not self.negate)
+        pass
 
     def __contains__(self, item):
         return self == item
