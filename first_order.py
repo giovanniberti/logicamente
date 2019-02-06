@@ -93,6 +93,14 @@ class FunctionInstance(Term):
         object.__setattr__(self, "function_name", function_name)
         object.__setattr__(self, "arg", arg)
 
+    def __str__(self):
+        string = ""
+
+        if self.negate:
+            string += "¬"
+
+        return string + f"{self.function_name}({self.arg})"
+
 
 @dataclass(init=False, frozen=True)
 class Quantifier(Term):
