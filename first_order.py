@@ -101,6 +101,15 @@ class FunctionInstance(Term):
 
         return string + f"{self.function_name}({self.arg})"
 
+    def __repr__(self):
+        return f"FunctionInstance{{name={self.function_name}, var1={repr(self.arg)}, negate={self.negate}}}"
+
+    def __contains__(self, item):
+        return item in self.arg
+
+    def __invert__(self):
+        return FunctionInstance(self.function_name, self.arg, not self.negate)
+
 
 @dataclass(init=False, frozen=True)
 class Quantifier(Term):
