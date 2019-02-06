@@ -1,7 +1,8 @@
 from collections import Counter
 
 from first_order import Var, Exists, ForAll, RelationInstance, Quantifier, Function, FunctionInstance
-from primitives import Literal, And, Or, FreeClause, Operator, Clause, KB
+from primitives import Literal, And, Or, FreeClause, Operator, Clause, KB, Implies, Iff, HornKB, \
+    HornFreeClause, HornClause
 
 
 def _qualname(obj):
@@ -80,6 +81,80 @@ class GroundVisitor:
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
         return self.visit(function.arg)
+
+
+class ImplicationsVisitor:
+
+    @visitor(Literal)
+    def visit(self, literal):
+        return literal
+
+    @visitor(Var)
+    def visit(self, var):
+        return var
+
+    @visitor(And)
+    def visit(self, operator: And):
+        op1 = self.visit(operator.operand1)
+        op2 = self.visit(operator.operand2)
+
+        return And(op1, op2, operator.negate)
+
+    @visitor(Or)
+    def visit(self, operator):
+        op1 = self.visit(operator.operand1)
+        op2 = self.visit(operator.operand2)
+
+        return Or(op1, op2, operator.negate)
+
+    @visitor(FreeClause)
+    def visit(self, clause):
+        terms = clause.terms
+
+        new_terms = []
+        for term in terms:
+            new_terms += [self.visit(term)]
+
+        return FreeClause(new_terms, clause.negate)
+
+    @visitor(Exists)
+    def visit(self, quantifier: Quantifier):
+        predicate = self.visit(quantifier.predicate)
+
+        return Exists(quantifier.variable, predicate, quantifier.negate)
+
+    @visitor(ForAll)
+    def visit(self, quantifier):
+        predicate = self.visit(quantifier.predicate)
+
+        return ForAll(quantifier.variable, predicate, quantifier.negate)
+
+    @visitor(RelationInstance)
+    def visit(self, relation: RelationInstance):
+        var1 = self.visit(relation.var1)
+        var2 = self.visit(relation.var2)
+
+        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+
+    @visitor(FunctionInstance)
+    def visit(self, function: FunctionInstance):
+        arg = self.visit(function.arg)
+
+        return FunctionInstance(function.function_name, arg, function.negate)
+
+    @visitor(Implies)
+    def visit(self, implication: Implies):
+        op1 = self.visit(implication.operand1)
+        op2 = self.visit(implication.operand2)
+
+        return Or(~op1, op2)
+
+    @visitor(Iff)
+    def visit(self, iff: Iff):
+        op1 = self.visit(iff.operand1)
+        op2 = self.visit(iff.operand2)
+
+        return And(Implies(op1, op2), Implies(op2, op1))
 
 
 class VarVisitor:

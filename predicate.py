@@ -1,10 +1,10 @@
 from collections import Counter
 from dataclasses import dataclass
 
-from first_order import Quantifier, Var, ForAll
-from primitives import FreeClause, Clause
+from first_order import Quantifier, Var, ForAll, RelationInstance, FunctionInstance
+from primitives import FreeClause, Clause, HornKB, HornFreeClause
 from visitor import CanonicalizeVisitor, VarVisitor, SubstVisitor, SkolemVisitor, GlobalizeVisitor, SimplifyVisitor, \
-    DistributeVisitor, ClausifyVisitor
+    DistributeVisitor, ClausifyVisitor, ImplicationsVisitor
 
 
 @dataclass
@@ -15,8 +15,12 @@ class Predicate:
         return str(self.components)
 
     def propositionalize(self):
+
+        remove_implications = ImplicationsVisitor()
+        components = remove_implications.visit(self.components)
+
         canonicalize = CanonicalizeVisitor()
-        components = canonicalize.visit(self.components)
+        components = canonicalize.visit(components)
 
         globalize = GlobalizeVisitor()
         components = globalize.visit(components)
