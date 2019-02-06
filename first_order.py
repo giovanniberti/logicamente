@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from primitives import Literal, Clause, Term
+from primitives import Literal, Clause, Term, FreeClause
 
 
 @dataclass
@@ -105,9 +105,9 @@ class FunctionInstance(Term):
 @dataclass(init=False, frozen=True)
 class Quantifier(Term):
     variable: Var
-    predicate: Clause
+    predicate: FreeClause
 
-    def __init__(self, variable: Var, predicate: Clause, negate: bool = False):
+    def __init__(self, variable: Var, predicate, negate: bool = False):
         super().__init__(negate)
         object.__setattr__(self, "variable", variable)
         object.__setattr__(self, "predicate", predicate)
