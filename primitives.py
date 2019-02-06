@@ -21,6 +21,9 @@ class Term(ABC):
     def __repr__(self):
         return f"Term{{negate={self.negate}}}"
 
+    def __iter__(self):
+        return iter({self})
+
 
 class Literal(Term):
     """A single propositional literal.
@@ -164,6 +167,18 @@ class Clause(Term):
             res = res or (var in v)
         return res
 
+    def __add__(self, other):
+        new = Clause(self.terms)
+        if type(other) is Clause:
+            if self.negate != other.negate:
+                raise ValueError("Can't add together two clauses with different polarity")
+
+            new = Clause(self.terms.union(other.terms))
+        else:
+            new = Clause(self.terms.union(other))
+
+        return new
+
     def __sub__(self, other: Literal):
         return Clause(self.terms - {other}, self.negate)
 
@@ -227,8 +242,12 @@ class KB:
     def __contains__(self, clause: Clause):
         return clause in self.clauses
 
-    def __add__(self, other: Clause):
-        return KB(self.clauses.union({other}))
+    def __add__(self, other):
+        new = KB(self.clauses)
+        for term in iter(other):
+            new = KB(new.clauses.union(term))
+
+        return new
 
     def __sub__(self, other: Clause):
         return KB(self.clauses.difference({other}))
