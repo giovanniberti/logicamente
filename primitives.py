@@ -328,4 +328,4 @@ class HornKB(KB):
         for term in iter(other):
             new = HornKB(new.clauses.union(term))
 
-        return
+        return new
