@@ -8,32 +8,23 @@ class Relation:
     name: str
 
     def __call__(self, *args, **kwargs):
-        if len(args) > 3:
-            raise RuntimeError("wrong number of arguments in relation (three args max)")
-
-        if len(args) == 2:
-            return RelationInstance(self.name, args[0], args[1])
-        elif len(args) == 3:
-            return RelationInstance(self.name, args[0], args[1], args[2])
+        return RelationInstance(self.name, *args)
 
 
 class RelationInstance(Term):
     relation_name: str
-    var1: Term
-    var2: Term
+    vars: list
 
-    def __init__(self, relation_name: str, var1: Term, var2: Term, negate: bool = False):
+    def __init__(self, relation_name: str, *vars, negate: bool = False):
         super().__init__(negate)
         object.__setattr__(self, "relation_name", relation_name)
-        object.__setattr__(self, "var1", var1)
-        object.__setattr__(self, "var2", var2)
+        object.__setattr__(self, "vars", vars)
 
     def __contains__(self, item: Literal):
-        return item in self.var1 or item in self.var2
+        return item in self.vars
 
     def __repr__(self):
-        return f"RelationInstance{{name={self.relation_name}, var1={repr(self.var1)}, var2={repr(self.var2)}, " \
-               f"negate={self.negate}}} "
+        return f"RelationInstance{{name={self.relation_name}, vars={repr(self.vars)}, negate={self.negate}}}"
 
     def __str__(self):
         string = ""
@@ -41,10 +32,13 @@ class RelationInstance(Term):
         if self.negate:
             string += "¬"
 
-        return string + f"{self.relation_name}({self.var1}, {self.var2})"
+        var_names = [str(var) for var in self.vars]
+        string += f'{self.relation_name}({", ".join(var_names)})'
+
+        return string
 
     def __invert__(self):
-        return RelationInstance(self.relation_name, self.var1, self.var2, not self.negate)
+        return RelationInstance(self.relation_name, *self.vars, negate=not self.negate)
 
 
 @dataclass

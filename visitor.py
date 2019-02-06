@@ -76,7 +76,11 @@ class GroundVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        return self.visit(relation.var1) and self.visit(relation.var2)
+        ground = False
+        for var in relation.vars:
+            ground |= self.visit(var)
+
+        return ground
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -131,10 +135,9 @@ class ImplicationsVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -188,7 +191,11 @@ class VarVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        return self.visit(relation.var1) + self.visit(relation.var2)
+        vars = []
+        for var in relation.vars:
+            vars += self.visit(var)
+
+        return vars
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -435,15 +442,14 @@ class SubstVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = relation.var1
-        var2 = relation.var2
+        vars = []
+        for var in relation.vars:
+            if self.body in var:
+                vars += [self.visit(var)]
+            else:
+                vars += [var]
 
-        if self.body in var1:
-            var1 = self.visit(var1)
-        if self.body in var2:
-            var2 = self.visit(var2)
-
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -509,10 +515,9 @@ class SkolemVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars_ = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars_, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -583,10 +588,9 @@ class SkolemFunctionVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -631,10 +635,9 @@ class SimplifyVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -691,10 +694,9 @@ class DistributeVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
@@ -744,10 +746,9 @@ class ClausifyVisitor:
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        var1 = self.visit(relation.var1)
-        var2 = self.visit(relation.var2)
+        vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, var1, var2, relation.negate)
+        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
