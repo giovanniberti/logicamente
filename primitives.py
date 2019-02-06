@@ -69,7 +69,7 @@ class Or(Operator):
         return Or(self.operand1, self.operand2, not self.negate)
 
     def __repr__(self) -> str:
-        return f"Or{{operand1={self.operand1}, operand2={self.operand2}}}"
+        return f"Or{{operand1={repr(self.operand1)}, operand2={repr(self.operand2)}}}"
 
     def __str__(self):
         string = ""
@@ -85,7 +85,7 @@ class And(Operator):
         return And(self.operand1, self.operand2, not self.negate)
 
     def __repr__(self) -> str:
-        return f"And{{operand1={self.operand1}, operand2={self.operand2}}}"
+        return f"And{{operand1={repr(self.operand1)}, operand2={repr(self.operand2)}}}"
 
     def __str__(self):
         string = ""
@@ -115,7 +115,7 @@ class FreeClause(Term):
         return string + ")"
 
     def __repr__(self):
-        return f"FreeClause{{terms={self.terms}, negate={self.negate}}}"
+        return f"FreeClause{{terms={repr(self.terms)}, negate={repr(self.negate)}}}"
 
     def __contains__(self, var: Term):
         res = False
@@ -156,7 +156,7 @@ class Clause(Term):
         return string
 
     def __repr__(self):
-        return f"Clause{{terms={self.terms}, negate={self.negate}}}"
+        return f"Clause{{terms={repr(self.terms)}, negate={repr(self.negate)}}}"
 
     def __contains__(self, var: Term):
         res = False
