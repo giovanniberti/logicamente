@@ -32,7 +32,7 @@ class RelationInstance(Term):
         return item in self.var1 or item in self.var2
 
     def __repr__(self):
-        return f"RelationInstance{{name={self.relation_name}, var1={self.var1}, var2={self.var2}, " \
+        return f"RelationInstance{{name={self.relation_name}, var1={repr(self.var1)}, var2={repr(self.var2)}, " \
                f"negate={self.negate}}} "
 
     def __str__(self):
