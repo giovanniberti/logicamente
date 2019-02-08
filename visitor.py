@@ -770,6 +770,13 @@ class ClausifyVisitor:
         op1 = self.visit(operator.operand1)
         op2 = self.visit(operator.operand2)
 
+        # Check for naked Lit/Var needed because Clausify can't differentiate
+        # between literals/vars in Relation/Functions and free literals/vars
+        if type(op1) in [Literal, Var]:
+            op1 = Clause({op1})
+        if type(op2) in [Literal, Var]:
+            op2 = Clause({op2})
+
         new_kb += op1
         new_kb += op2
 
