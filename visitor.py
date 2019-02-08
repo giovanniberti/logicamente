@@ -206,6 +206,40 @@ class VarVisitor:
         return self.visit(function.arg)
 
 
+class FreeVarVisitor:
+    @visitor(Literal)
+    def visit(self, _):
+        return []
+
+    @visitor(And)
+    def visit(self, operator):
+        return self.visit(operator.operand1) + self.visit(operator.operand2)
+
+    @visitor(Or)
+    def visit(self, operator):
+        return self.visit(operator.operand1) + self.visit(operator.operand2)
+
+    @visitor(Var)
+    def visit(self, var):
+        return [var]
+
+    @visitor(FreeClause)
+    def visit(self, clause):
+        return [var for term in clause.terms for var in self.visit(term)]
+
+    @visitor(RelationInstance)
+    def visit(self, relation: RelationInstance):
+        vars = []
+        for var in relation.vars:
+            vars += self.visit(var)
+
+        return vars
+
+    @visitor(FunctionInstance)
+    def visit(self, function: FunctionInstance):
+        return self.visit(function.arg)
+
+
 class GlobalizeVisitor:
     i = 0
     var_visitor = VarVisitor()
