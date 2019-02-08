@@ -7,10 +7,10 @@ connected(piccadilly_circus,leicester_square,piccadilly).
 connected(green_park,oxford_circus,victoria).
 connected(oxford_circus,piccadilly_circus,bakerloo).
 connected(piccadilly_circus,charing_cross,bakerloo).
-connected(tottenham_court_road,leicester_square,northern).
 connected(leicester_square,charing_cross,northern).
+connected(tottenham_court_road,leicester_square,northern).
 
-/*
+/* example queries:
 nearby(bond_street,oxford_circus).
 nearby(oxford_circus,tottenham_court_road).
 nearby(bond_street,tottenham_court_road).
@@ -29,8 +29,8 @@ nearby(leicester_square,charing_cross).
 nearby(tottenham_court_road,charing_cross).
 */
 
-nearby(X,Y):-connected(X,Y,L).
-nearby(X,Y):-connected(X,Z,L),connected(Z,Y,L).
+/*nearby(X,Y):-connected(X,Y,L).
+nearby(X,Y):-connected(X,Z,L),connected(Z,Y,L).*/
 
 /*
 example query:
@@ -52,3 +52,14 @@ reachable(X,Y,route(Z)):-
 
 reachable(X,Y,[]):-connected(X,Y,L).
 reachable(X,Y,[Z,R]):-connected(X,Z,L),reachable(Z,Y,R).
+
+q :- p.
+p :- l, m.
+m :- b, l.
+l :- a, p.
+a.
+b.
+
+/*f(Y) :- h(X,Y).
+h(X, g) :- g.
+g.*/
