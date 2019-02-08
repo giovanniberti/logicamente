@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from mente_parser import program, make_fact, make_clause, make_relation, parse_relation
+from mente_parser import program, clause as clause_parser, parse_statement
 from predicate import Predicate, solve
 from primitives import HornKB, HornClause, And
 from tests import PropositionalLogicTestCase
@@ -19,19 +19,7 @@ def main():
         return
 
     for statement in parser["statements"]:
-        head = statement["head"]
-
-        if "body" in statement:
-            body = statement["body"]
-            clause = make_clause(head, body)
-            superclause += [clause]
-        else:
-            if "constant" in head:
-                instance = make_fact(head["constant"])
-                superclause += [HornClause({instance})]
-            else:
-                head = head["relation"]
-                superclause += [HornClause({make_relation("head")})]
+        superclause += [parse_statement(statement)]
 
     # Generate free clause with and of elements in superclause
     free_clause = superclause[0]
@@ -46,10 +34,10 @@ def main():
     for clause in p.components:
         hkb += HornClause.from_clause(clause)
 
-    query = parse_relation(input("input query: "))
+    query_input = input("input query: ") + "."
+    query = parse_statement(clause_parser.parseString(query_input)["clause"])
 
-    query_clause = HornClause(set(query))
-    result = solve(hkb, query_clause)
+    result = solve(hkb, query)
 
     print(f'backward_chain{{ {query} }}: '
           f'{result is not None}')

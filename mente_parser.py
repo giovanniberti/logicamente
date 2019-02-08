@@ -1,7 +1,7 @@
 from pyparsing import Word, alphanums, delimitedList, Group, Optional, cStyleComment, ZeroOrMore, Forward, nestedExpr
 
 from first_order import Var, Relation, Exists
-from primitives import Literal as Lit, FreeClause, Implies, And
+from primitives import Literal as Lit, FreeClause, Implies, And, HornClause
 from visitor import FreeVarVisitor
 
 upper = alphanums.upper() + "_"
@@ -20,7 +20,8 @@ list_parser = nestedExpr(opener="[", closer="]", content=comma_list)
 list_par << list_parser
 
 relation = Group(identifier.setResultsName("relation_name") + "(" + Optional(Group(delimitedList(parameter))
-                 .setResultsName("parameters")) + ")").setResultsName("relation")
+                                                                             .setResultsName(
+    "parameters")) + ")").setResultsName("relation")
 relation_par << relation
 
 literal_relation = identifier.setResultsName("relation_name") + "(" + Group(delimitedList(identifier)) \
@@ -128,3 +129,18 @@ def parse_var(string):
 
 def parse_lit(string):
     return Lit(identifier.parseString(string)["name"][0])
+
+
+def parse_statement(statement_parse):
+    head = statement_parse["head"]
+    if "body" in statement_parse:
+        body = statement_parse["body"]
+        clause = make_clause(head, body)
+        return clause
+    else:
+        if "constant" in head:
+            instance = make_fact(head["constant"])
+            return HornClause({instance})
+        else:
+            head = head["relation"]
+            return HornClause({make_relation(head)})
