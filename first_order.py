@@ -40,6 +40,15 @@ class RelationInstance(Term):
     def __invert__(self):
         return RelationInstance(self.relation_name, *self.vars, negate=not self.negate)
 
+    def __eq__(self, other):
+        return type(other) is RelationInstance and \
+               self.relation_name == other.relation_name and \
+               self.vars == other.vars and \
+               self.negate == other.negate
+
+    def __hash__(self):
+        return hash(self.relation_name) ^ hash(self.negate) ^ hash("RelationName") ^ hash(self.vars)
+
 
 @dataclass
 class Function:
@@ -103,6 +112,15 @@ class FunctionInstance(Term):
 
     def __invert__(self):
         return FunctionInstance(self.function_name, self.arg, not self.negate)
+
+    def __eq__(self, other):
+        return type(other) is FunctionInstance and \
+               self.function_name == other.function_name and \
+               self.arg == other.arg and \
+               self.negate == other.negate
+
+    def __hash__(self):
+        return hash(self.function_name) ^ hash(self.negate) ^ hash("FunctionInstance") ^ hash(self.arg)
 
 
 @dataclass(init=False, frozen=True)
