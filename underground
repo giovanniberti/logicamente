@@ -53,6 +53,7 @@ reachable(X,Y,route(Z)):-
 reachable(X,Y,[]):-connected(X,Y,L).
 reachable(X,Y,[Z,R]):-connected(X,Z,L),reachable(Z,Y,R).
 
+/* cycle example */
 q :- p.
 p :- l, m.
 m :- b, l.
