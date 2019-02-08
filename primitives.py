@@ -259,7 +259,7 @@ class Clause(Term):
     def to_free_clause(self):
         terms = Clause._make_or(self.terms)
 
-        return FreeClause([terms])
+        return FreeClause([terms], negate=self.negate)
 
     @staticmethod
     def _make_or(terms):
