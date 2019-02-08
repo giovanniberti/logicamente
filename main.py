@@ -1,14 +1,14 @@
 import sys
 import unittest
 
-from mente_parser import program, make_fact, make_clause, parse_lit, make_relation, parse_relation
-from predicate import Predicate, solve, subst_all
+from mente_parser import program, make_fact, make_clause, make_relation, parse_relation
+from predicate import Predicate, solve
 from primitives import HornKB, HornClause, And
 from tests import PropositionalLogicTestCase
 
 
 def main():
-    path = "./underground_1"
+    path = input("input file: ")
     parser = program.parseFile(path, parseAll=True)
 
     superclause = []
