@@ -121,6 +121,10 @@ class ImplicationsVisitor:
 
         return FreeClause(new_terms, clause.negate)
 
+    @visitor(HornClause)
+    def visit(self, clause):
+        return self.visit(clause.to_free_clause())
+
     @visitor(Exists)
     def visit(self, quantifier: Quantifier):
         predicate = self.visit(quantifier.predicate)
