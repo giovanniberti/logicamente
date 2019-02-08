@@ -187,11 +187,11 @@ class VarVisitor:
 
     @visitor(Exists)
     def visit(self, quantifier: Quantifier):
-        return [quantifier.variable]
+        return list({quantifier.variable}.union(set(self.visit(quantifier.predicate))))
 
     @visitor(ForAll)
     def visit(self, quantifier):
-        return [quantifier.variable]
+        return list({quantifier.variable}.union(set(self.visit(quantifier.predicate))))
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
@@ -230,12 +230,13 @@ class GlobalizeVisitor:
         for var in set(dups):
             new_var = Var(f"x{self.i}")
             subst_visitor = SubstVisitor(var, new_var)
-            op1 = subst_visitor.visit(operator.operand1)
+            op1 = subst_visitor.visit(op1)
             self.i += 1
 
             new_var = Var(f"x{self.i}")
             subst_visitor = SubstVisitor(var, new_var)
-            op2 = subst_visitor.visit(operator.operand2)
+            op2 = subst_visitor.visit(op2)
+            self.i += 1
 
         op1 = self.visit(op1)
         op2 = self.visit(op2)
@@ -254,12 +255,13 @@ class GlobalizeVisitor:
         for var in set(dups):
             new_var = Var(f"x{self.i}")
             subst_visitor = SubstVisitor(var, new_var)
-            op1 = subst_visitor.visit(operator.operand1)
+            op1 = subst_visitor.visit(op1)
             self.i += 1
 
             new_var = Var(f"x{self.i}")
             subst_visitor = SubstVisitor(var, new_var)
-            op2 = subst_visitor.visit(operator.operand2)
+            op2 = subst_visitor.visit(op2)
+            self.i += 1
 
         op1 = self.visit(op1)
         op2 = self.visit(op2)
@@ -297,64 +299,56 @@ class CanonicalizeVisitor:
 
     @visitor(Literal)
     def visit(self, literal):
-        return ~literal
+        return literal
 
     @visitor(And)
     def visit(self, operator):
         if operator.negate:
-            return Or(~operator.operand1, ~operator.operand2, not operator.negate)
+            return Or(self.visit(~operator.operand1), self.visit(~operator.operand2), not operator.negate)
 
-        return operator
+        return And(self.visit(operator.operand1), self.visit(operator.operand2), operator.negate)
 
     @visitor(Or)
     def visit(self, operator):
         if operator.negate:
-            return And(~operator.operand1, ~operator.operand2, not operator.negate)
+            return And(self.visit(~operator.operand1), self.visit(~operator.operand2), not operator.negate)
 
-        return operator
+        return Or(self.visit(operator.operand1), self.visit(operator.operand2), operator.negate)
 
     @visitor(Var)
     def visit(self, var):
-        return ~var
+        return var
 
     @visitor(FreeClause)
     def visit(self, clause):
-        if clause.negate:
-            new_terms = []
-            for term in clause.terms:
-                new_terms += [self.visit(~term)]
+        new_terms = []
+        for term in clause.terms:
+            new_term = ~term if clause.negate else term
+            new_terms += [self.visit(new_term)]
 
-            return FreeClause(new_terms, not clause.negate)
-        else:
-            return clause
+        return FreeClause(new_terms, False)
 
     @visitor(Exists)
     def visit(self, quantifier):
         if quantifier.negate:
             return ForAll(quantifier.variable, self.visit(~quantifier.predicate), not quantifier.negate)
 
-        return quantifier
+        return Exists(quantifier.variable, self.visit(quantifier.predicate), quantifier.negate)
 
     @visitor(ForAll)
     def visit(self, quantifier):
         if quantifier.negate:
             return Exists(quantifier.variable, self.visit(~quantifier.predicate), not quantifier.negate)
 
-        return quantifier
+        return ForAll(quantifier.variable, self.visit(quantifier.predicate), quantifier.negate)
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):
-        if relation.negate:
-            return ~relation
-        else:
-            return relation
+        return relation
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
-        if function.negate:
-            return ~function
-        else:
-            return function
+        return function
 
 
 class SubstVisitor:
@@ -417,6 +411,8 @@ class SubstVisitor:
                 new_terms += [self.visit(term)]
 
             return FreeClause(new_terms, clause.negate)
+
+        return clause
 
     @visitor(Exists)
     def visit(self, quantifier: Quantifier):
@@ -752,10 +748,10 @@ class ClausifyVisitor:
     def visit(self, relation: RelationInstance):
         vars = [self.visit(var) for var in relation.vars]
 
-        return RelationInstance(relation.relation_name, *vars, negate=relation.negate)
+        return Clause({RelationInstance(relation.relation_name, *vars, negate=relation.negate)})
 
     @visitor(FunctionInstance)
     def visit(self, function: FunctionInstance):
         arg = self.visit(function.arg)
 
-        return FunctionInstance(function.function_name, arg, function.negate)
+        return Clause({FunctionInstance(function.function_name, arg, function.negate)})
