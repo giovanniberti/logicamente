@@ -308,6 +308,7 @@ class KB:
     but applied to `Clause`s instead of `Literal`s"""
 
     clauses: FrozenSet[Clause]
+    negate: bool = False
 
     def __init__(self, clauses=frozenset()):
         if type(clauses) not in [frozenset, set]:
@@ -341,6 +342,21 @@ class KB:
     def __iter__(self):
         return iter(self.clauses)
 
+    def to_free_clause(self):
+        terms = KB._make_and(self.clauses)
+
+        return FreeClause([terms])
+
+    @staticmethod
+    def _make_and(terms):
+        terms = list(terms)
+        if len(terms) <= 1:
+            return terms[0]
+        if len(terms) == 2:
+            return And(terms[0], terms[1])
+        else:
+            return And(terms[0], KB._make_and(terms[1:]))
+
 
 class HornKB(KB):
     def __init__(self, clauses=frozenset()):
@@ -358,7 +374,7 @@ class HornKB(KB):
         if not HornFreeClause.is_horn(other):
             raise ValueError("Cannot add non-Horn clause to HornKB")
 
-        new = HornKB()
+        new = HornKB(self.clauses)
         for term in iter(other):
             new = HornKB(new.clauses.union(term))
 
