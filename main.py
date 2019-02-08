@@ -46,10 +46,6 @@ def main():
     for clause in p.components:
         hkb += HornClause.from_clause(clause)
 
-    # query = parse_relation("nearby(leicester_square,charing_cross)")
-    # query = parse_relation("connected(leicester_square,charing_cross,northern)")
-    # query = parse_lit("q")
-
     query = parse_relation(input("input query: "))
 
     query_clause = HornClause(set(query))
