@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from first_order import Var, RelationInstance, FunctionInstance
-from primitives import FreeClause, HornKB, HornClause, Clause
+from primitives import FreeClause, HornKB, HornClause, Implies, Or
 from visitor import CanonicalizeVisitor, SubstVisitor, SkolemVisitor, GlobalizeVisitor, SimplifyVisitor, \
     DistributeVisitor, ClausifyVisitor, ImplicationsVisitor
 
@@ -33,7 +33,7 @@ class Predicate:
         components = distribute_visitor.visit(components)
 
         clausify_visitor = ClausifyVisitor()
-        components = clausify_visitor.visit(components)
+        components = clausify_visitor.visit(components).clauses
 
         return Predicate(components)
 
@@ -86,7 +86,20 @@ def occurs(var, x, subst):
 
 
 def rule_iter_for_goal(kb: HornKB, goal: HornClause):
+    done = []
     for rule in kb:
+        done += [rule]
+        todo = [clause for clause in kb if clause not in done]
+        todo_bodies = [term for clause in todo for term in [body_term for body_term in clause.body]]
+        done_heads = [term for clause in done for term in [body_term for body_term in clause.head]]
+        if ~goal in todo_bodies and goal in done_heads:
+            goal_clause = prettify([clause for clause in done if goal == clause.head][0])
+            offending_clause = prettify([clause for clause in todo if ~goal in clause.body][0])
+            raise RuntimeError(f"cycle detected while trying to prove {goal}.\n"
+                               f"There is at least one clause to analyze which has goal in its body (negated)\n"
+                               f"cycle: {str(goal_clause)} (current) -> {str(offending_clause)} (todo) -> {str(goal_clause)}\n"
+                               f"while having already analyzed a clause with goal in head\n"
+                               f"already analyzed: {[str(c) for c in done]} \ntodo: {[str(c) for c in todo]}\n")
         yield rule
 
 
@@ -128,3 +141,21 @@ def solve(kb: HornKB, query):
         return subst_all(FreeClause(list(query.terms)), subst)
 
     return None
+
+
+def prettify(clause: HornClause):
+    new_body = HornClause._make_or(clause.body)
+    free_clause = FreeClause([Or(clause.head, ~new_body)])
+
+    new_terms = []
+    canonicalize = CanonicalizeVisitor()
+    for term in free_clause.terms:
+        if type(term) is Or:  # from Horn's, must be one positive and one negative
+            if term.operand1.negate:
+                new_terms += Implies(canonicalize.visit(term.operand1), term.operand2)
+            else:
+                new_terms += [Implies(canonicalize.visit(term.operand2), term.operand1)]
+        else:
+            new_terms += [term]
+
+    return FreeClause(new_terms)

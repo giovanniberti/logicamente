@@ -22,15 +22,14 @@ def main():
         superclause += [parse_statement(statement)]
 
     # Generate free clause with and of elements in superclause
-    free_clause = superclause[0]
-    clause_iter = iter(superclause)
-    next(clause_iter)
+    clause_iter = reversed(superclause)
+    free_clause = next(clause_iter)
 
     for clause in clause_iter:
         free_clause = And(clause, free_clause)
 
     p = Predicate(free_clause).propositionalize()
-    hkb = HornKB(set())
+    hkb = HornKB(())
     for clause in p.components:
         hkb += HornClause.from_clause(clause)
 

@@ -1,8 +1,7 @@
 from collections import Counter
 
 from first_order import Var, Exists, ForAll, RelationInstance, Quantifier, Function, FunctionInstance
-from primitives import Literal, And, Or, FreeClause, Operator, Clause, KB, Implies, Iff, HornKB, \
-    HornFreeClause, HornClause
+from primitives import Literal, And, Or, FreeClause, Operator, Clause, KB, Implies, Iff, HornClause
 
 
 def _qualname(obj):
@@ -766,7 +765,7 @@ class ClausifyVisitor:
 
     @visitor(And)
     def visit(self, operator: And):
-        new_kb = KB(set())
+        new_kb = KB([])
         op1 = self.visit(operator.operand1)
         op2 = self.visit(operator.operand2)
 
@@ -793,12 +792,13 @@ class ClausifyVisitor:
     @visitor(FreeClause)
     def visit(self, clause: FreeClause):
         terms = clause.terms
+        kb = KB()
 
-        new_terms = set()
+        new_terms = []
         for term in terms:
-            new_terms |= {self.visit(term)}
+            kb += self.visit(term)
 
-        return KB() + new_terms
+        return kb
 
     @visitor(RelationInstance)
     def visit(self, relation: RelationInstance):

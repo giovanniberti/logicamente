@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import Counter
-from typing import FrozenSet, List
+from typing import FrozenSet, List, Tuple
 
 
 class Term(ABC):
@@ -272,7 +272,6 @@ class Clause(Term):
             return Or(terms[0], Clause._make_or(terms[1:]))
 
 
-
 class HornClause(Clause):
     def __init__(self, vars=frozenset(), negate=False):
         super().__init__(vars, negate)
@@ -307,14 +306,14 @@ class KB:
     (Conjunctive Normal Form). It supports the same operations of `Clause`,
     but applied to `Clause`s instead of `Literal`s"""
 
-    clauses: FrozenSet[Clause]
+    clauses: Tuple
     negate: bool = False
 
-    def __init__(self, clauses=frozenset()):
-        if type(clauses) not in [frozenset, set]:
-            raise TypeError("clauses argument must be either set or frozenset!")
+    def __init__(self, clauses=()):
+        if type(clauses) not in [tuple, list]:
+            raise TypeError("clauses argument must be either list or tuple!")
 
-        object.__setattr__(self, "clauses", clauses)
+        object.__setattr__(self, "clauses", tuple(clauses))
 
     def __str__(self):
         string = "("
@@ -331,13 +330,18 @@ class KB:
 
     def __add__(self, other):
         new = KB(self.clauses)
+
         for term in iter(other):
-            new = KB(new.clauses.union(term))
+            counter = Counter(new.clauses)
+            if counter[term] == 0:
+                new = KB(list(new.clauses) + [term])
 
         return new
 
     def __sub__(self, other: Clause):
-        return KB(self.clauses.difference({other}))
+        clauses = list(self.clauses)
+        clauses.remove(other)
+        return KB(clauses)
 
     def __iter__(self):
         return iter(self.clauses)
@@ -359,12 +363,12 @@ class KB:
 
 
 class HornKB(KB):
-    def __init__(self, clauses=frozenset()):
+    def __init__(self, clauses=()):
         for clause in clauses:
             if not HornFreeClause.is_horn(clause.terms):
                 raise TypeError("HornKB must be composed only of Horn clauses")
 
-        horn_clauses = frozenset([HornClause.from_clause(clause) for clause in clauses])
+        horn_clauses = [HornClause.from_clause(clause) for clause in clauses]
         super().__init__(horn_clauses)
 
     def __repr__(self):
@@ -375,7 +379,10 @@ class HornKB(KB):
             raise ValueError("Cannot add non-Horn clause to HornKB")
 
         new = HornKB(self.clauses)
+
         for term in iter(other):
-            new = HornKB(new.clauses.union(term))
+            counter = Counter(new.clauses)
+            if counter[term] == 0:
+                new = HornKB(list(new.clauses) + [term])
 
         return new
