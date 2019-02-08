@@ -494,6 +494,21 @@ class SubstVisitor:
 
         return FunctionInstance(function.function_name, arg, function.negate)
 
+    @visitor(Clause)
+    def visit(self, clause):
+        terms = clause.terms
+
+        if self.body == clause:
+            return self.subst
+        if self.body in clause:
+            new_terms = set()
+            for term in terms:
+                new_terms |= {self.visit(term)}
+
+            return Clause(new_terms, clause.negate)
+
+        return clause
+
 
 class SkolemVisitor:
 
