@@ -54,6 +54,12 @@ class Literal(Term):
     def __contains__(self, item):
         return type(item) is Literal and self.name == item.name
 
+    def __eq__(self, other):
+        return type(other) is Literal and self.name == other.name and self.negate == other.negate
+
+    def __hash__(self):
+        return hash(self.negate) ^ hash(self.name) ^ hash("Literal")
+
 
 class Operator(Term, ABC):
     operand1: Term
@@ -244,6 +250,28 @@ class Clause(Term):
     def __invert__(self):
         return Clause(self.terms, not self.negate)
 
+    def __eq__(self, other):
+        return isinstance(other, Clause) and self.negate == other.negate and self.terms == other.terms
+
+    def __hash__(self):
+        return hash(self.negate) ^ hash(tuple(self.terms)) ^ hash("Clause")
+
+    def to_free_clause(self):
+        terms = Clause._make_or(self.terms)
+
+        return FreeClause([terms])
+
+    @staticmethod
+    def _make_or(terms):
+        terms = list(terms)
+        if len(terms) <= 1:
+            return terms[0]
+        if len(terms) == 2:
+            return Or(terms[0], terms[1])
+        else:
+            return Or(terms[0], Clause._make_or(terms[1:]))
+
+
 
 class HornClause(Clause):
     def __init__(self, vars=frozenset(), negate=False):
@@ -260,6 +288,12 @@ class HornClause(Clause):
 
     def __repr__(self):
         return f"HornClause{{terms={self.terms}, negate={self.negate}}}"
+
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super.__hash__(self)
 
     def from_clause(clause: Clause):
         return HornClause(clause.terms)
