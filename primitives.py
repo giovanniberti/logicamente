@@ -119,7 +119,7 @@ class Implies(Operator):
         if self.negate:
             string += "¬"
 
-        return string + f"({self.operand1} ⇒ {self.operand2})"
+        return string + f"({str(self.operand1)} ⇒ {str(self.operand2)})"
 
 
 class Iff(Operator):
@@ -135,7 +135,7 @@ class Iff(Operator):
         if self.negate:
             string += "¬"
 
-        return string + f"({self.operand1} ⇔ {self.operand2})"
+        return string + f"({str(self.operand1)} ⇔ {str(self.operand2)})"
 
 
 class FreeClause(Term):
