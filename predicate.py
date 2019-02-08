@@ -116,7 +116,7 @@ def backward_chain_and(kb: HornKB, goals, subst):
     elif len(goals) == 0:
         yield subst
     else:
-        for substs1 in backward_chain_or(kb, subst_all(goals[0], subst), subst):
+        for substs1 in backward_chain_or(kb, subst_all(~goals[0], subst), subst):
             for subst2 in backward_chain_and(kb, goals[1:], substs1):
                 yield subst2
 
