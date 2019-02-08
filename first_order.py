@@ -20,8 +20,11 @@ class RelationInstance(Term):
         object.__setattr__(self, "relation_name", relation_name)
         object.__setattr__(self, "vars", vars)
 
-    def __contains__(self, item: Literal):
-        return item in self.vars
+    def __contains__(self, item):
+        present = False
+        for var in self.vars:
+            present |= item in var
+        return present
 
     def __repr__(self):
         return f"RelationInstance{{name={self.relation_name}, vars={repr(self.vars)}, negate={self.negate}}}"
