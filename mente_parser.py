@@ -1,4 +1,4 @@
-from pyparsing import Word, alphanums, delimitedList, Group, Optional, cStyleComment, ZeroOrMore, Forward
+from pyparsing import Word, alphanums, delimitedList, Group, Optional, cStyleComment, ZeroOrMore, Forward, nestedExpr
 
 from first_order import Var, Relation, Exists
 from primitives import Literal as Lit, FreeClause, Implies, And
@@ -10,10 +10,17 @@ lower = alphanums.lower() + "_"
 identifier = Word(lower).setResultsName("name", listAllMatches=True)
 variable = Word(upper).setResultsName("var_name", listAllMatches=True)
 relation_par = Forward()
-parameter = variable ^ identifier ^ relation_par
+list_par = Forward().setResultsName("list")
+parameter = variable ^ identifier ^ relation_par ^ list_par
 
-relation = Group(identifier.setResultsName("relation_name") + "(" + Group(delimitedList(parameter))
-                 .setResultsName("parameters") + ")").setResultsName("relation")
+comma_list = delimitedList(parameter)
+head_tail_list = parameter.setResultsName("head") + "|" + variable.setResultsName("tail")
+# list = "[" + (comma_list ^ head_tail_list) + "]"
+list_parser = nestedExpr(opener="[", closer="]", content=comma_list)
+list_par << list_parser
+
+relation = Group(identifier.setResultsName("relation_name") + "(" + Optional(Group(delimitedList(parameter))
+                 .setResultsName("parameters")) + ")").setResultsName("relation")
 relation_par << relation
 
 literal_relation = identifier.setResultsName("relation_name") + "(" + Group(delimitedList(identifier)) \
@@ -35,17 +42,24 @@ def make_relation(relation_parse):
     relation = Relation(name)
     parameters = []
 
-    parse_parameters = relation_parse["parameters"]
-    variables = list(parse_parameters.get("var_name", []))
-    literals = list(parse_parameters.get("name", []))
+    parse_parameters = relation_parse.get("parameters", [])
 
-    for par in parse_parameters:
-        if par in variables:
-            parameters += [Var(par)]
-        elif par in literals:
-            parameters += [Lit(par)]
-        else:
-            parameters += [make_relation(par)]
+    if parse_parameters:
+        variables = list(parse_parameters.get("var_name", []))
+        literals = list(parse_parameters.get("name", []))
+        lists = list(parse_parameters.get("list", []))
+
+        for par in parse_parameters:
+            if par in variables:
+                parameters += [Var(par)]
+            elif par in literals:
+                parameters += [Lit(par)]
+            elif par in lists:
+                rel_list = "list(" + ",".join([str(p) for p in par.asList()]) + ")"
+                parameters += [parse_relation(rel_list)]
+                pass
+            else:
+                parameters += [make_relation(par)]
 
     instance = relation(*parameters)
 
