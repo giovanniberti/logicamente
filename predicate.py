@@ -97,7 +97,7 @@ def rule_iter_for_goal(kb: HornKB, goal: HornClause):
             offending_clause = prettify([clause for clause in todo if ~goal in clause.body][0])
             raise RuntimeError(f"cycle detected while trying to prove {goal}.\n"
                                f"There is at least one clause to analyze which has goal in its body (negated)\n"
-                               f"cycle: {str(goal_clause)} (current) -> {str(offending_clause)} (todo) -> {str(goal_clause)}\n"
+                               f"cycle: {str(goal_clause)} (current) 🡢 {str(offending_clause)} (todo) 🡢 {str(goal_clause)}\n"
                                f"while having already analyzed a clause with goal in head\n"
                                f"already analyzed: {[str(c) for c in done]} \ntodo: {[str(c) for c in todo]}\n")
         yield rule
