@@ -264,7 +264,9 @@ class Clause(Term):
     @staticmethod
     def _make_or(terms):
         terms = list(terms)
-        if len(terms) <= 1:
+        if len(terms) == 0:
+            return FreeClause([])
+        if len(terms) == 1:
             return terms[0]
         if len(terms) == 2:
             return Or(terms[0], terms[1])

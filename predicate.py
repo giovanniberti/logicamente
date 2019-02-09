@@ -91,10 +91,18 @@ def rule_iter_for_goal(kb: HornKB, goal: HornClause):
         done += [rule]
         todo = [clause for clause in kb if clause not in done]
         todo_bodies = [term for clause in todo for term in [body_term for body_term in clause.body]]
-        done_heads = [term for clause in done for term in [body_term for body_term in clause.head]]
-        if ~goal in todo_bodies and goal in done_heads:
-            goal_clause = prettify([clause for clause in done if goal == clause.head][0])
-            offending_clause = prettify([clause for clause in todo if ~goal in clause.body][0])
+        done_heads = [term for clause in done for term in [head for head in clause.head]]
+
+        # Unification pass
+        unified_todo_bodies = [subst_all(body_term, unify(body_term, goal, {}) or {}) for body_term in todo_bodies]
+        unified_done_heads = [subst_all(head, unify(head, goal, {}) or {}) for head in done_heads]
+
+        head_matches = dict(zip(unified_done_heads, done))
+        body_matches = dict(zip(unified_todo_bodies, todo))
+
+        if ~goal in unified_todo_bodies and goal in unified_done_heads:
+            goal_clause = prettify(head_matches[goal])
+            offending_clause = prettify(body_matches[~goal])
             raise RuntimeError(f"cycle detected while trying to prove {goal}.\n"
                                f"There is at least one clause to analyze which has goal in its body (negated)\n"
                                f"cycle: {str(goal_clause)} (current) 🡢 {str(offending_clause)} (todo) 🡢 {str(goal_clause)}\n"
